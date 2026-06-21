@@ -106,12 +106,14 @@ h1,h2,h3,h4,h5,h6{
   page-break-after:avoid;
   break-inside:avoid;
 }
-/* 列表项 / 引用 / 代码块 / 表格不被腰斩 */
-li,blockquote,pre,table,figure,.r-entry{
+/* 要点级分页：单个列表项 / 引用 / 代码块 / 表格不被腰斩；
+   .r-entry 不在此列——允许一条经历跨页，以填满页面（但每个 li 仍原子，
+   不会从一行中间截断；h3 标题由 break-after:avoid 保证不孤悬页底） */
+li,blockquote,pre,table,figure{
   break-inside:avoid;
   page-break-inside:avoid;
 }
 /* 段落：短段落整体不被拆开，避免从一行中间截断；万不得已断页时用 widows/orphans 兜底 */
 p{ orphans:3; widows:3; break-inside:avoid; page-break-inside:avoid; }
-/* 条目之间不在尴尬位置断页 */
+/* 条目之间的间距（条目本身可跨页，要点级粒度） */
 .r-entry{ margin-top:2px; }

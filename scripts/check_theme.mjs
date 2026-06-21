@@ -52,7 +52,29 @@ if (/content\s*:\s*url\(/.test(css)) {
   errors.push('出现 `content:url(...)`：禁止用图片替代文字。');
 }
 
-// 5) 软提醒：动画对打印无意义（不拦截，仅提示）
+// 5) --bg 必须为纯白（简历打印在白纸上）：
+//    ① 物理打印：非白底会整页铺碳粉、在办公打印机上发灰发脏，纯白则不喷粉；
+//    ② @page 边距区 Chromium 无法着色，非白 --bg 会产生「彩色内容 + 白边框」。
+//    解析 --bg 值，任一通道偏离 255 过大即拦截（容忍 ±2，放过 #fff / #ffffff / rgb(255,255,255)）。
+{
+  const bgVal = (css.match(/--bg\s*:\s*([^;}\n]+)/) || [, ''])[1].trim();
+  if (bgVal) {
+    let r = 255, g = 255, b = 255, known = true;
+    const hx = bgVal.match(/^#([0-9a-f]{3}|[0-9a-f]{6})\b/i);
+    const rg = bgVal.match(/^rgba?\(\s*([\d.]+)(?:\s|,)+([\d.]+)(?:\s|,)+([\d.]+)/i);
+    if (hx) {
+      const h = hx[1];
+      if (h.length === 3) { r = parseInt(h[0] + h[0], 16); g = parseInt(h[1] + h[1], 16); b = parseInt(h[2] + h[2], 16); }
+      else { r = parseInt(h.slice(0, 2), 16); g = parseInt(h.slice(2, 4), 16); b = parseInt(h.slice(4, 6), 16); }
+    } else if (rg) { r = +rg[1]; g = +rg[2]; b = +rg[3]; }
+    else known = false; // var()/命名色等无法解析：保守放行，不阻断
+    if (known && (r < 253 || g < 253 || b < 253)) {
+      errors.push(`--bg 为 ${bgVal}：简历纸面须为纯白（#ffffff）。非白底物理打印发灰/费碳粉，且 Chromium 无法给 @page 边距区上色，会产生「彩色内容 + 白边框」。`);
+    }
+  }
+}
+
+// 6) 软提醒：动画对打印无意义（不拦截，仅提示）
 if (/@keyframes\b/.test(css) || /\banimation\s*:/.test(css)) {
   warnings.push('含动画（@keyframes/animation）：PDF 打印无意义，可删以保持干净。');
 }
