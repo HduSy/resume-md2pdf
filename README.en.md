@@ -34,6 +34,66 @@ cd scripts && npm install      # installs marked + puppeteer (first run download
 
 Chinese fonts / troubleshooting: see `references/setup-notes.md`.
 
+## Usage
+
+The three scripts are independent and can be called on their own. **When `--out` is omitted, HTML / PDF default to the Desktop** (macOS `~/Desktop`, Windows equivalent; auto-falls back to `OneDrive\Desktop` if OneDrive redirection is on).
+
+`build_html`'s default output and `render_pdf`'s default input are both `~/Desktop/resume.html`, so the two chain together without passing any path.
+
+### Generate an HTML preview
+
+```bash
+node scripts/build_html.mjs --in resume.md --theme-css .resume-theme.css --lang zh-CN --icons
+```
+
+| Flag | Required | Description | Default |
+|---|---|---|---|
+| `--in` | yes | Markdown résumé | — |
+| `--theme-css` | yes | Theme CSS (AI-designed or hand-written) | — |
+| `--out` |  | Output HTML path | `~/Desktop/resume.html` |
+| `--lang` |  | Language (`zh-CN` / `en`) | `zh-CN` |
+| `--title` |  | HTML `<title>` | by language (个人简历 / Resume) |
+| `--theme-name` |  | Theme name (body class + annotation) | `custom` |
+| `--icons` |  | Add Lucide icons to contact info | off |
+| `--no-open` |  | Don't auto-open the browser preview | auto-open by default |
+
+<details><summary>Flag details</summary>
+
+- `--in`: the Markdown résumé source — the only content input.
+- `--theme-css`: the visual skin, layered on `templates/base.css` (layout / pagination); decides only "how it looks". AI-designed or hand-written, but must pass `check_theme` first.
+- `--out`: output HTML path; defaults to the Desktop.
+- `--lang`: written to `<html lang>`, picks the CJK / Latin font stack and affects the `--title` default.
+- `--title`: the browser tab / bookmark name.
+- `--theme-name`: theme identifier — goes into `<body class="theme-<name>">`, a comment atop the inlined CSS, and the console log; theme CSS can use this class as a named scope (e.g. `.theme-stripe h2`). Defaults to `custom`.
+- `--icons`: only matches icons for the contact line; does not affect body text or layout.
+- `--no-open`: skip auto-opening the browser preview — handy for batch runs or being called by another script.
+
+</details>
+
+> Phone numbers in the contact line have dashes stripped automatically (`139-8765-4321` → `13987654321`); no need for `--icons`.
+
+### Validate the theme (must pass before generating HTML)
+
+```bash
+node scripts/check_theme.mjs .resume-theme.css   # non-zero exit = violation; fix per the message and re-check
+```
+
+> The argument is the theme CSS **path** (a positional arg, not a `--flag`); exit code 0 = pass, non-zero = violation (missing `--accent`, `@page` present, pagination overridden, image background, etc.) — fix per the printed message and re-check.
+
+### Export the PDF
+
+```bash
+node scripts/render_pdf.mjs --in resume.html --out resume.pdf
+```
+
+| Flag | Required | Description | Default |
+|---|---|---|---|
+| `--in` |  | Input HTML | `~/Desktop/resume.html` |
+| `--out` |  | Output PDF | `~/Desktop/resume.pdf` |
+| `--no-open` |  | Don't auto-open the PDF preview | auto-open with the system default app |
+
+> `--in` / `--out` default to align with `build_html` (Desktop `resume.html` ↔ `resume.pdf`), so the two chain together without passing any path; `--no-open` disables auto-preview, otherwise the PDF opens with the system default app (Preview on macOS, often Edge on Windows).
+
 ## Layout
 
 ```

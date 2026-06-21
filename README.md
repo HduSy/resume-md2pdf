@@ -34,6 +34,66 @@ cd scripts && npm install      # 安装 marked + puppeteer（首次会下载 Chr
 
 中文字体 / 排错见 `references/setup-notes.md`。
 
+## 用法
+
+三个脚本互相独立，可单独调用。**未传 `--out` 时，HTML / PDF 默认输出到桌面**（macOS `~/Desktop`、Windows 同理；开了 OneDrive 重定向时自动回退 `OneDrive\Desktop`）。
+
+`build_html` 的默认输出与 `render_pdf` 的默认输入同为桌面 `resume.html`，二者不传路径即可首尾相连。
+
+### 生成 HTML 预览
+
+```bash
+node scripts/build_html.mjs --in resume.md --theme-css .resume-theme.css --lang zh-CN --icons
+```
+
+| 参数 | 必填 | 说明 | 默认 |
+|---|---|---|---|
+| `--in` | 是 | Markdown 简历 | — |
+| `--theme-css` | 是 | 主题 CSS（AI 现场设计或手写） | — |
+| `--out` |  | 输出 HTML 路径 | `~/Desktop/resume.html` |
+| `--lang` |  | 语言（`zh-CN` / `en`） | `zh-CN` |
+| `--title` |  | HTML `<title>` | 按语言（个人简历 / Resume） |
+| `--theme-name` |  | 主题名（body class + 注释标识） | `custom` |
+| `--icons` |  | 给联系方式加 Lucide 图标 | 默认关 |
+| `--no-open` |  | 不自动开浏览器预览 | 默认自动开 |
+
+<details><summary>参数说明</summary>
+
+- `--in`：简历的 Markdown 源文件，唯一的内容输入。
+- `--theme-css`：视觉皮肤，叠加在 `templates/base.css`（管排版 / 分页）之上，只决定「长什么样」；AI 现场设计或手写均可，须先过 `check_theme`。
+- `--out`：HTML 输出路径，不传则落桌面。
+- `--lang`：写进 `<html lang>`，决定中 / 英字体栈，也影响 `--title` 的默认值。
+- `--title`：浏览器标签页 / 书签名。
+- `--theme-name`：主题标识，同时进入 `<body class="theme-<名字>">`、内联 CSS 顶部注释、控制台日志；主题 CSS 可借这个 class 写命名作用域（如 `.theme-stripe h2`）。不传为 `custom`。
+- `--icons`：仅给联系方式行匹配图标，不影响正文与排版。
+- `--no-open`：不自动开浏览器预览，批量生成或被其它脚本调用时常用。
+
+</details>
+
+> 联系方式行的手机号会自动去掉连字符（`139-8765-4321` → `13987654321`），无需 `--icons`。
+
+### 校验主题（生成 HTML 前必过）
+
+```bash
+node scripts/check_theme.mjs .resume-theme.css   # 非 0 退出即违规，按报错修正后重校
+```
+
+> 参数是主题 CSS 的**路径**（位置参数，不是 `--flag`）；退出码 0 = 通过，非 0 = 违规（缺 `--accent` / 写了 `@page` / 覆盖分页 / 图片背景等），按打印的提示修正后重校。
+
+### 导出 PDF
+
+```bash
+node scripts/render_pdf.mjs --in resume.html --out resume.pdf
+```
+
+| 参数 | 必填 | 说明 | 默认 |
+|---|---|---|---|
+| `--in` |  | 输入 HTML | `~/Desktop/resume.html` |
+| `--out` |  | 输出 PDF | `~/Desktop/resume.pdf` |
+| `--no-open` |  | 不自动打开 PDF 预览 | 默认用系统默认应用打开 |
+
+> `--in` / `--out` 默认与 `build_html` 对齐（桌面 `resume.html` ↔ `resume.pdf`），二者都不传路径即可首尾相连；`--no-open` 关掉自动预览，否则 PDF 用系统默认应用打开（macOS 为 Preview、Windows 常为 Edge）。
+
 ## 目录
 
 ```
